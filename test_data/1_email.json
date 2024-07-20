@@ -1,0 +1,8 @@
+[
+    {
+        "subject": "Hello!",
+        "body": "This is the first test email.",
+        "sender_id": 1,
+        "recipient_id": 2
+    }
+]

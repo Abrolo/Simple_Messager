@@ -1,0 +1,17 @@
+[
+    {
+        "subject": "Hello!",
+        "body": "This is the first test email.",
+        "sender_id": 1
+    },
+    {
+        "subject": "Greetings!",
+        "body": "This is the second test email.",
+        "sender_id": 1
+    },
+    {
+        "subject": "Update!",
+        "body": "This is the third test email.",
+        "sender_id": 1
+    }
+]
