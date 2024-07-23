@@ -4,6 +4,7 @@ import pytest
 from flask import Flask, jsonify, request
 from flaskr import create_app
 from flaskr.db import get_db, init_db
+from faker import Faker
 
 @pytest.fixture
 def app():
@@ -46,3 +47,14 @@ def register_users(client):
     
     # Optionally, you can return user data if needed
     return user1, user2
+
+@pytest.fixture
+def populate_emails(client):
+    fake = Faker()
+    num_of_emails = 10
+    for _ in range(num_of_emails):
+        email = {
+                "message_subject": fake.sentence(), "body": fake.text(), "sender_id": 1, "recipient_id": 2
+        }
+        client.post('/emails', json=email)
+    return num_of_emails

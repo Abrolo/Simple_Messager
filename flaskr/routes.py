@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flaskr.db import get_db
+from flaskr.services.email_services import EmailService
 
 def init_app(app):
     @app.route('/')
@@ -38,7 +39,7 @@ def delete_email(request, db):
 
 def send_email(request, db):
     data = request.json
-    subject = data.get('subject')
+    subject = data.get('message_subject')
     body = data.get('body')
     sender_id = data.get('sender_id')
     recipient_id = data.get('recipient_id')
@@ -51,10 +52,9 @@ def send_email(request, db):
     return jsonify({"message": "Email sent successfully"}), 201
 
 def get_emails(db):
-    emails = db.execute(
-        'SELECT e.id, message_subject, body, created_at, sender_id, username'
-        ' FROM email e JOIN user u ON e.sender_id = u.id'
-        ' ORDER BY created_at DESC'
-    ).fetchall()
-    emails_list = [dict(email) for email in emails]
+    email_service = EmailService(db)
+
+    start = request.args.get('start', default=None, type=int)
+    stop = request.args.get('stop', default=None, type=int)
+    emails_list = email_service.get_emails(start, stop)
     return jsonify(emails_list), 200
