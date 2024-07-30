@@ -23,8 +23,9 @@ def test_get_empty_email_db(client):
 def test_get_all_emails(client, populate_emails):
     num_of_emails = populate_emails
     response = client.get('/emails')
+    assert response.status_code == 200
+    
     emails = response.get_json()
-    print(response)
     assert (num_of_emails) == len(emails)
     
 def test_get_indexed_emails(client, populate_emails):

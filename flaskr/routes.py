@@ -12,7 +12,7 @@ def init_app(app):
         db = get_db()
 
         if request.method == 'GET':
-            response = get_emails(db)
+            response = get_emails(request, db)
 
         elif request.method == 'POST':
             response = send_email(request, db)
@@ -30,6 +30,7 @@ def init_app(app):
 
         db.commit()
         return jsonify({"message": "User registered successfully"}), 201
+    
 
 def delete_email(request, db):
     id = request.json.get("id")
@@ -51,10 +52,11 @@ def send_email(request, db):
     db.commit()
     return jsonify({"message": "Email sent successfully"}), 201
 
-def get_emails(db):
+def get_emails(request, db):
     email_service = EmailService(db)
 
     start = request.args.get('start', default=None, type=int)
     stop = request.args.get('stop', default=None, type=int)
+    print(start, stop, flush=True)
     emails_list = email_service.get_emails(start, stop)
     return jsonify(emails_list), 200

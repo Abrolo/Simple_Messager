@@ -11,7 +11,7 @@ CREATE TABLE email (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sender_id INTEGER NOT NULL,
   recipient_id INTEGER NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TEXT NOT NULL DEFAULT current_timestamp,
   message_subject TEXT NOT NULL,
   body TEXT NOT NULL,
   FOREIGN KEY (sender_id) REFERENCES user (id)
