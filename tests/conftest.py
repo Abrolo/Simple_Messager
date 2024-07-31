@@ -54,7 +54,7 @@ def populate_emails(client):
     num_of_emails = 10
     for _ in range(num_of_emails):
         email = {
-                "message_subject": fake.sentence(), "body": fake.text(), "sender_id": 1, "recipient_id": 2
+                "message_subject": fake.sentence(), "body": fake.text(), "sender_username": "tester1", "recipient_username": "tester2"
         }
         client.post('/emails', json=email)
     return num_of_emails

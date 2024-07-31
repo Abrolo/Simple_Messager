@@ -9,11 +9,11 @@ CREATE TABLE user (
 
 CREATE TABLE email (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  sender_id INTEGER NOT NULL,
-  recipient_id INTEGER NOT NULL,
+  sender_username TEXT NOT NULL,
+  recipient_username TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT current_timestamp,
   message_subject TEXT NOT NULL,
   body TEXT NOT NULL,
-  FOREIGN KEY (sender_id) REFERENCES user (id)
-  FOREIGN KEY (recipient_id) REFERENCES user (id)
+  FOREIGN KEY (sender_username) REFERENCES user (username)
+  FOREIGN KEY (recipient_username) REFERENCES user (username)
 );
