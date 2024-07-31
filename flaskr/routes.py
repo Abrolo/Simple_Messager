@@ -105,18 +105,9 @@ def send_email(request, db):
     Returns:
         A success message with status code 201 if the email is sent successfully.
     """
-    data = request.json
-    subject = data.get('message_subject')
-    body = data.get('body')
-    sender_username = data.get('sender_username')
-    recipient_username = data.get('recipient_username')
-
-    db.execute(
-        'INSERT INTO email (message_subject, body, sender_username, recipient_username) VALUES (?, ?, ?, ?)',
-        (subject, body, sender_username, recipient_username)
-    )
-    db.commit()
-    return jsonify({"message": "Email sent successfully"}), 201
+    email_service = EmailService(db)
+    message, status_code = email_service.send_email(request)
+    return jsonify(message), status_code
 
 def get_emails(request, db):
     """

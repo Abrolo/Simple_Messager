@@ -49,7 +49,7 @@ class EmailService:
             ValueError: If recipient_username is not provided or invalid.
         """
         try:
-            start, stop, recipient_username = self.get_request_args(request)
+            start, stop, recipient_username = self.fetch_get_emails_request_args(request)
             
             if not recipient_username:
                 return {"error": "Recipient username is required."}, 400
@@ -72,6 +72,30 @@ class EmailService:
             print(f"Exception: {e}", flush=True)
             return {"error": "An error occurred while fetching emails."}, 500
 
+    def fetch_send_email_request_args(self, request):
+        data = request.json
+        subject = data.get('message_subject')
+        body = data.get('body')
+        sender_username = data.get('sender_username')
+        recipient_username = data.get('recipient_username')
+        
+        return subject, body, sender_username, recipient_username
+
+    def send_email(self, request):
+        subject, body, sender_username, recipient_username = self.fetch_send_email_request_args(request)
+        
+        if not self.user_exists(recipient_username):
+            return {"error": "Recipient does not exist."}, 404
+        elif not self.user_exists(sender_username):
+            return {"error": "Sender does not exist."}, 404
+        else:
+            self.db.execute(
+        'INSERT INTO email (message_subject, body, sender_username, recipient_username) VALUES (?, ?, ?, ?)',
+        (subject, body, sender_username, recipient_username)
+        )
+            self.db.commit()
+            return {"message": "Email sent successfully."}, 201
+            
     def user_exists(self, username):
         """
         Check if a user exists in the database.
@@ -86,7 +110,7 @@ class EmailService:
         result = self.db.execute(query, (username,)).fetchone()
         return result
 
-    def get_request_args(self, request):
+    def fetch_get_emails_request_args(self, request):
         """
         Extract and validate request arguments for fetching emails.
 

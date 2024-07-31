@@ -30,6 +30,7 @@ def client(app):
 def runner(app):
     return app.test_cli_runner()
 
+
 @pytest.fixture
 def register_users(client):
     # Define and register users
@@ -42,19 +43,24 @@ def register_users(client):
         "password": "1234"
     }
 
-    client.post('/register', json=user1)
-    client.post('/register', json=user2)
+    response = client.post('/register', json=user1)
+    assert response.status_code == 201
+    
+    response = client.post('/register', json=user2)
+    assert response.status_code == 201
     
     # Optionally, you can return user data if needed
     return user1, user2
 
 @pytest.fixture
-def populate_emails(client):
+def populate_emails(client, register_users):
+    _, _ = register_users
     fake = Faker()
     num_of_emails = 10
     for _ in range(num_of_emails):
         email = {
                 "message_subject": fake.sentence(), "body": fake.text(), "sender_username": "tester1", "recipient_username": "tester2"
         }
-        client.post('/emails', json=email)
+        response = client.post('/emails', json=email)
+        assert response.status_code == 201
     return num_of_emails
