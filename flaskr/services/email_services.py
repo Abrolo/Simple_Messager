@@ -1,4 +1,10 @@
-class EmailService:
+from flaskr.models.email_model import Email
+from flaskr.models.user_model import User
+from flaskr.protocols.email_protocol import EmailModelProtocol
+from flaskr.repositories.email_repo import EmailRepository
+from flaskr.repositories.user_repo import UserRepository
+
+class EmailServices:
     """
     A service class for handling email-related operations, including fetching,
     sending, and checking emails in the database.
@@ -15,6 +21,8 @@ class EmailService:
             db: The database connection object.
         """
         self.db = db
+        self.email_repo = EmailRepository(db)
+        self.user_repo = UserRepository(db)
 
     def get_limit_and_offset(self, start_index=0, stop_index=0):
         """
@@ -49,30 +57,29 @@ class EmailService:
             ValueError: If recipient_username is not provided or invalid.
         """
         try:
-            start, stop, recipient_username = self.fetch_get_emails_request_args(request)
+            start, stop, recipient_username = self.fetch_get_request_args(request)
             
             if not recipient_username:
                 return {"error": "Recipient username is required."}, 400
 
-            if not self.user_exists(recipient_username):
+            if not self.user_repo.user_exists(recipient_username):
                 return {"error": "Username does not exist."}, 404
             
             if start is not None and stop is not None:
                 limit, offset = self.get_limit_and_offset(start, stop)
-                emails = self.fetch_paginated_emails(limit, offset, recipient_username)
+                emails = self.email_repo.get_indexed_emails_to_user(limit, offset, recipient_username)
             else:
-                emails = self.fetch_all_emails_to_user(recipient_username)
-
+                emails = self.email_repo.get_all_emails_to_user(recipient_username)
+                
             return [dict(email) for email in emails], 200
 
         except ValueError as ve:
             return {"error": str(ve)}, 400
 
         except Exception as e:
-            print(f"Exception: {e}", flush=True)
             return {"error": "An error occurred while fetching emails."}, 500
 
-    def fetch_send_email_request_args(self, request):
+    def fetch_send_request_args(self, request):
         data = request.json
         subject = data.get('message_subject')
         body = data.get('body')
@@ -82,35 +89,31 @@ class EmailService:
         return subject, body, sender_username, recipient_username
 
     def send_email(self, request):
-        subject, body, sender_username, recipient_username = self.fetch_send_email_request_args(request)
-        
-        if not self.user_exists(recipient_username):
-            return {"error": "Recipient does not exist."}, 404
-        elif not self.user_exists(sender_username):
-            return {"error": "Sender does not exist."}, 404
-        else:
-            self.db.execute(
-        'INSERT INTO email (message_subject, body, sender_username, recipient_username) VALUES (?, ?, ?, ?)',
-        (subject, body, sender_username, recipient_username)
-        )
-            self.db.commit()
-            return {"message": "Email sent successfully."}, 201
+        subject, body, sender_username, recipient_username = self.fetch_send_request_args(request)
+        response, status_code = self.check_valid_users(recipient_username, sender_username)
+        if status_code != 200:
+            return response, status_code
+        try:
+            email = Email(self.db, subject, body, sender_username, recipient_username)
+            if email.is_valid():
+                self.email_repo.send_email(email)
+                return{"message": "Email was successfully sent."}, 201
             
-    def user_exists(self, username):
-        """
-        Check if a user exists in the database.
+        except ValueError as ve:
+            return{"error": str(ve)}, 400
+        except Exception:
+            return{"error": "An error occurred while sending the email."}, 500
+        
+            
+    def check_valid_users(self, recipient_username, sender_username):
+        if not self.user_repo.user_exists(recipient_username):
+            return {"error": "Recipient does not exist."}, 404
+        if not self.user_repo.user_exists(sender_username):
+            return {"error": "Sender does not exist."}, 404
+        return {}, 200
+    
 
-        Args:
-            username: The username to check.
-
-        Returns:
-            A result indicating if the user exists.
-        """
-        query = "SELECT 1 FROM user WHERE username = ?"
-        result = self.db.execute(query, (username,)).fetchone()
-        return result
-
-    def fetch_get_emails_request_args(self, request):
+    def fetch_get_request_args(self, request):
         """
         Extract and validate request arguments for fetching emails.
 
@@ -134,54 +137,23 @@ class EmailService:
             return start, stop, recipient_username
         except ValueError as ve:
             raise ValueError(ve)
-
-    def fetch_all_emails_to_user(self, recipient_username):
-        """
-        Fetch all emails sent to a specific user, ordered by creation date.
-
-        Args:
-            recipient_username: The username of the recipient.
-
-        Returns:
-            A list of emails for the specified user.
-        """
-        query = """
-            SELECT * FROM email
-            WHERE recipient_username = ?
-            ORDER BY created_at DESC
-        """
-        return self.db.execute(query, (recipient_username,)).fetchall()
-
-    def fetch_all_emails(self):
-        """
-        Fetch all emails in the database, ordered by creation date.
-
-        Returns:
-            A list of all emails in the database.
-        """
-        query = """
-            SELECT * FROM email
-            ORDER BY created_at DESC
-        """
-        return self.db.execute(query).fetchall()
-
-    def fetch_paginated_emails(self, limit, offset, recipient_username):
-        """
-        Fetch a paginated list of emails sent to a specific user.
-
-        Args:
-            limit: The maximum number of emails to return.
-            offset: The starting point for fetching emails.
-            recipient_username: The username of the recipient.
-
-        Returns:
-            A list of emails for the specified user within the given range.
-        """
-        query = '''
-            SELECT *
-            FROM email e
-            WHERE recipient_username = ?
-            ORDER BY e.created_at DESC
-            LIMIT ? OFFSET ?
-        '''
-        return self.db.execute(query, (recipient_username, limit, offset)).fetchall()
+        
+    def delete_email(self, request):
+        try:
+            email_id = request.get("id", default=None, type=int)
+            if not email_id:
+                raise ValueError("Email ID cannot be empty.")
+            if not self.email_repo.email_exists(email_id):
+                raise LookupError("Email not found in database.")
+            response = self.email_repo.delete_email(email_id)
+            
+            if response.rowcount > 0:
+                return{"message": f"Email with id {email_id} was successfully deleted from the database."}, 200
+            else:
+                raise ValueError("The email could not be deleted.")
+        except ValueError as ve:
+            return {"error": str(ve)}, 400
+        except LookupError as le:
+            return {"error": str(le)}, 404
+        except Exception as e:
+            return {"error": "An error occurred while deleting the email." + str(e)}, 500

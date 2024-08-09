@@ -1,6 +1,9 @@
 from flask import Flask, jsonify, request
 import os
 
+from flaskr.services.email_services import EmailServices
+from flaskr.models.email_model import Email
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)

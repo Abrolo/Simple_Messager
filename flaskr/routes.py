@@ -1,6 +1,9 @@
-from flask import jsonify, request
+from flask import jsonify, request, current_app
 from flaskr.db import get_db
-from flaskr.services.email_services import EmailService
+from flaskr.models.email_model import Email
+from flaskr.models.user_model import User
+from flaskr.services.email_services import EmailServices
+from flaskr.services.user_services import UserServices
 
 def init_app(app):
     """
@@ -32,18 +35,19 @@ def init_app(app):
         Returns:
             The response from the corresponding email operation.
         """
-        db = get_db()
+        db = get_db()     
+        email_service = EmailServices(db)
 
         if request.method == 'GET':
-            response = get_emails(request, db)
+            message, status_code = email_service.get_emails(request.json)
 
         elif request.method == 'POST':
-            response = send_email(request, db)
+            message, status_code = email_service.send_email(request.json)
 
         elif request.method == 'DELETE':
-            response = delete_email(request, db)
+            message, status_code = email_service.delete_email(request.json)
 
-        return response
+        return jsonify(message), status_code
 
     @app.route('/register', methods=['POST'])
     def register():
@@ -56,30 +60,28 @@ def init_app(app):
         Returns:
             A success message with status code 201 if the user is registered successfully.
         """
-        data = request.json
         db = get_db()
-        result = db.execute('INSERT INTO user (username, password) VALUES (?, ?)', 
-                   (data.get("username"), data.get("password")))
-
-        db.commit()
+        user_service = UserServices(db)
         
-        if result.rowcount > 0:
-            return jsonify({"message": "User registered successfully"}), 201
-        else:
-            return jsonify({"error": f"Bad Request"}), 400
+        message, status_code = user_service.register_user(request.json)
+        
+        return jsonify(message), status_code
     
     
-def delete_email(request, db):
+def delete_email(user_request, db, email_service):
     """
     Delete an email from the database based on the provided ID and return a response.
 
     Args:
-        request: The Flask request object containing the email ID in JSON format.
+        user_request: The Flask request object containing the email ID in JSON format.
         db: The database connection object.
 
     Returns:
         A JSON response indicating the success or failure of the delete operation.
     """
+    message, status_code = email_service.delete_email(user_request)
+    return jsonify(message), status_code
+    
     id = request.json.get("id")
     
     # Execute the DELETE statement and get the number of affected rows
@@ -94,32 +96,30 @@ def delete_email(request, db):
 
         
 
-def send_email(request, db):
+def send_email(user_request, email_service):
     """
     Send a new email by inserting it into the database.
 
     Args:
-        request: The Flask request object containing the email data.
+        user_request: The Flask request object containing the email data.
         db: The database connection.
 
     Returns:
         A success message with status code 201 if the email is sent successfully.
     """
-    email_service = EmailService(db)
-    message, status_code = email_service.send_email(request)
+    message, status_code = email_service.send_email(user_request)
     return jsonify(message), status_code
 
-def get_emails(request, db):
+def get_emails(user_request, email_service):
     """
     Fetch emails based on query parameters.
 
     Args:
-        request: The Flask request object containing query parameters.
+        user_request: The Flask request object containing query parameters.
         db: The database connection.
 
     Returns:
         A JSON response containing the list of emails and the status code.
     """
-    email_service = EmailService(db)
-    emails_list, status_code = email_service.get_emails(request)
+    emails_list, status_code = email_service.get_emails(user_request)
     return jsonify(emails_list), status_code
