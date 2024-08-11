@@ -15,17 +15,17 @@ class UserServices:
     def format_register_request(self, json_data):
         return json_data.get("username"), json_data.get("password")
     
-    def register_user(self, request):
+    def register_user(self, data):
         try: 
-            username = request.args.get('username', default=None, type=str)
-            password = request.args.get('password', default=None, type=str)
+            username = data["username"]
+            password = data["password"]
             user = User(username, password)
-            
             if user.is_valid():
                 if self.user_repo.user_exists(username):
                     raise ValueError("Username already exists.")
             
                 response = self.user_repo.register_user(user)
+                print(response, flush=True)
                 if response.rowcount > 0:
                     return{"message": f"User {username} registered sucessfully."}, 201
                 else:

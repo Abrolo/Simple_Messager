@@ -98,5 +98,5 @@ curl -X GET "http://127.0.0.1:5000/emails?start=0&stop=1&recipient_username=test
 ## Delete email
 
 ```sh
-curl -X DELETE http://127.0.0.1:5000/emails -H "Content-Type: application/json" -d'{"id": 2}'
+curl -X DELETE http://127.0.0.1:5000/emails/2
 ```

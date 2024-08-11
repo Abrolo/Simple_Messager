@@ -9,7 +9,7 @@ class EmailRepository:
     def send_email(self, email : Email):
         self.db.execute(
         'INSERT INTO email (message_subject, body, sender_username, recipient_username) VALUES (?, ?, ?, ?)',
-        (email.subject, email.body, email.sender_username, email.recipient_username)
+        (email.message_subject, email.body, email.sender_username, email.recipient_username)
         )
         self.db.commit()
         return {"message": "Email sent successfully."}
