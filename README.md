@@ -10,7 +10,7 @@ This is a simple API that can handle the following:
 
 
 
-# Initializing the server
+# Setup
 
 ## Create local environment
 
