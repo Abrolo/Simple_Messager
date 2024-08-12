@@ -6,6 +6,7 @@ from flaskr import create_app
 from flaskr.db import get_db, init_db
 from faker import Faker
 
+
 @pytest.fixture
 def app():
     db_fd, db_path = tempfile.mkstemp()
@@ -22,9 +23,11 @@ def app():
     os.close(db_fd)
     os.unlink(db_path)
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def runner(app):
@@ -45,12 +48,13 @@ def register_users(client):
 
     response = client.post('/register', json=user1)
     assert response.status_code == 201
-    
+
     response = client.post('/register', json=user2)
     assert response.status_code == 201
-    
+
     # Optionally, you can return user data if needed
     return user1, user2
+
 
 @pytest.fixture
 def populate_emails(client, register_users):
@@ -59,7 +63,7 @@ def populate_emails(client, register_users):
     num_of_emails = 10
     for _ in range(num_of_emails):
         email = {
-                "message_subject": fake.sentence(), "body": fake.text(), "sender_username": "tester1", "recipient_username": "tester2"
+            "message_subject": fake.sentence(), "body": fake.text(), "sender_username": "tester1", "recipient_username": "tester2"
         }
         response = client.post('/emails', json=email)
         assert response.status_code == 201

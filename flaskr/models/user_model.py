@@ -3,7 +3,6 @@ class User:
         self.username = username
         self.password = password
 
-    
     def is_valid(self):
         if not self.username:
             raise ValueError("A user must have a username.")
@@ -12,6 +11,7 @@ class User:
         elif len(self.username) < 2:
             raise ValueError("Username must be at least 2 characters long.")
         elif len(self.password) < 2:
-            raise ValueError("The password must be at least 2 characters long.")
+            raise ValueError(
+                "The password must be at least 2 characters long.")
         else:
             return True

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, g
+from flask import jsonify, request
 from flaskr.db import get_db
 from flaskr.services.email_services import EmailServices
 from flaskr.services.user_services import UserServices
@@ -25,7 +25,7 @@ def init_app(app):
     def hello():
         """
         A simple route that returns a greeting message.
-        
+
         Returns:
             A greeting message "Hello, World!".
         """
@@ -41,7 +41,20 @@ def init_app(app):
         """
         db = get_db()
         email_service = EmailServices(db)
-        message, status_code = email_service.get_emails(request)
+        message, status_code = email_service.handle_get_emails(request)
+        return jsonify(message), status_code
+
+    @app.route('/emails/<int:email_id>', methods=['GET'])
+    def get_email(email_id):
+        """
+        Handle fetching emails based on query parameters.
+
+        Returns:
+            The response from the get_emails operation.
+        """
+        db = get_db()
+        email_service = EmailServices(db)
+        message, status_code = email_service.handle_get_email(email_id)
         return jsonify(message), status_code
 
     @app.route('/emails', methods=['POST'])
@@ -54,7 +67,7 @@ def init_app(app):
         """
         db = get_db()
         email_service = EmailServices(db)
-        message, status_code = email_service.send_email(request.json)
+        message, status_code = email_service.handle_send_email(request.json)
         return jsonify(message), status_code
 
     @app.route('/emails/<int:email_id>', methods=['DELETE'])
@@ -67,7 +80,7 @@ def init_app(app):
         """
         db = get_db()
         email_service = EmailServices(db)
-        message, status_code = email_service.delete_email(email_id)
+        message, status_code = email_service.handle_delete_email(email_id)
         return jsonify(message), status_code
 
     @app.route('/register', methods=['POST'])
@@ -83,5 +96,5 @@ def init_app(app):
         """
         db = get_db()
         user_service = UserServices(db)
-        message, status_code = user_service.register_user(request.json)
+        message, status_code = user_service.handle_register_user(request.json)
         return jsonify(message), status_code

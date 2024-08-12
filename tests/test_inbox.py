@@ -16,9 +16,9 @@ def test_register_user(client, app):
         "username": "tester1",
         "password": "1234"
     }
-    
+
     response = client.post('/register', json=user_data)
-    
+
     assert response.status_code == 201
 
 
@@ -40,9 +40,9 @@ def test_get_empty_email_db(client, register_users):
     _, _ = register_users
     recipient_username = "tester2"
     response = client.get(f'/emails?recipient_username={recipient_username}')
-    
+
     assert response.status_code == 200
-    
+
     emails = response.get_json()['emails']
     assert len(emails) == 0
 
@@ -67,10 +67,11 @@ def test_get_indexed_emails(client, populate_emails):
     start, stop = 3, 5
     num_of_emails = stop - start
     recipient_username = "tester2"
-    
-    response = client.get(f'/emails?start={start}&stop={stop}&recipient_username={recipient_username}')
+
+    response = client.get(
+        f'/emails?start={start}&stop={stop}&recipient_username={recipient_username}')
     emails = response.get_json()["emails"]
-    
+
     assert num_of_emails == len(emails)
     for i in range(len(emails) - 1):
         assert emails[i]["created_at"] <= emails[i + 1]["created_at"]
@@ -93,13 +94,14 @@ def test_get_all_emails_to_user_x(client, populate_emails):
     """
     _ = populate_emails
     recipient_username = "tester1"
-    
+
     response = client.get(f'/emails?recipient_username={recipient_username}')
     emails = response.get_json()["emails"]
-    
+
     assert response.status_code == 200
     for email in emails:
         assert email["recipient_username"] == recipient_username
+
 
 def test_get_emails_with_empty_recipient(client, populate_emails):
     """
@@ -111,22 +113,23 @@ def test_get_emails_with_empty_recipient(client, populate_emails):
         register_users: Fixture to register test users.
     """
     _ = populate_emails
-    
+
     # Send a GET request with an empty recipient_username
     response = client.get('/emails?recipient_username=')
-    
+
     # Check if the status code is 400 Bad Request
     assert response.status_code == 400
 
     # Check if the response is JSON
     assert response.is_json
-    
+
     # Get the response JSON data
     response_data = response.get_json()
-    
+
     # Verify the error message in the response
     assert "error" in response_data
-    
+
+
 def test_get_emails_to_non_existing_users(client, populate_emails):
     """
     Test the behavior when querying emails with a non-existent username.
@@ -137,22 +140,21 @@ def test_get_emails_to_non_existing_users(client, populate_emails):
         register_users: Fixture to register test users.
     """
     _ = populate_emails
-    
+
     # Send a GET request with an empty recipient_username
     response = client.get('/emails?recipient_username=thisUserDoesNotExist')
-    
+
     # Check if the status code is 404 Not Found
     assert response.status_code == 404
 
     # Check if the response is JSON
     assert response.is_json
-    
+
     # Get the response JSON data
     response_data = response.get_json()
-    
+
     # Verify the error message in the response
     assert "error" in response_data
-
 
 
 def test_send_email(client, register_users):
@@ -172,7 +174,7 @@ def test_send_email(client, register_users):
     """
     _, _ = register_users
     recipient_username = "tester2"
-    
+
     new_email = {
         'message_subject': 'Test Subject',
         'body': 'Test Body',
@@ -181,19 +183,19 @@ def test_send_email(client, register_users):
     }
     response = client.post('/emails', json=new_email)
     assert response.status_code == 201
-    
+
     response = client.get(f'/emails?recipient_username={recipient_username}')
-    
+
     assert response.status_code == 200
     emails = response.get_json()["emails"]
-    
+
     assert any(email['message_subject'] == 'Test Subject' for email in emails)
-    
+
 
 def test_send_email_with_empty_sender_username(client, register_users):
     _, user2 = register_users
     recipient_username = user2["username"]
-    
+
     new_email = {
         'message_subject': 'Test Subject',
         'body': 'Test Body',
@@ -201,13 +203,14 @@ def test_send_email_with_empty_sender_username(client, register_users):
         'recipient_username': recipient_username,
     }
     response = client.post('/emails', json=new_email)
-    
+
     assert response.status_code == 400
-    
+
+
 def test_send_email_with_empty_recipient_username(client, register_users):
     user1, _ = register_users
     sender_username = user1["username"]
-    
+
     new_email = {
         'message_subject': 'Test Subject',
         'body': 'Test Body',
@@ -215,9 +218,10 @@ def test_send_email_with_empty_recipient_username(client, register_users):
         'recipient_username': "",
     }
     response = client.post('/emails', json=new_email)
-    
+
     assert response.status_code == 400
-    
+
+
 def test_delete_email(client, register_users):
     """
     Test the email deletion functionality.
@@ -237,7 +241,7 @@ def test_delete_email(client, register_users):
     """
     _, _ = register_users
     recipient_username = "tester2"
-    
+
     new_email = {
         'message_subject': 'Test Subject',
         'body': 'Test Body',
@@ -249,13 +253,14 @@ def test_delete_email(client, register_users):
     response = client.get(f'/emails?recipient_username={recipient_username}')
     email = response.get_json()["emails"][0]
     email_id = email['id']
-    
+
     response = client.delete(f'/emails/{email_id}')
     assert response.status_code == 200
-    
+
     response = client.get(f'/emails?recipient_username={recipient_username}')
     emails = response.get_json()["emails"]
     assert not any(e['id'] == email_id for e in emails)
+
 
 def test_delete_non_existent_email(client):
     response = client.delete(f'/emails/{1}')
