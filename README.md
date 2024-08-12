@@ -1,3 +1,15 @@
+# Description
+This is a simple API that can handle the following:
+1. Send messages from one user to another.
+2. Fetch messages to one user.
+3. Delete a message from the database.
+4. Fetch messages between start and stop indices, ordered by time.
+
+# Program overview
+![program_chart drawio](https://github.com/user-attachments/assets/57dfc1a0-80dd-4227-b13c-506f9779d658)
+
+
+
 # Initializing the server
 
 ## Create local environment
